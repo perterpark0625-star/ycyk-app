@@ -8,3 +8,10 @@ fix_html.py
 create_test.py
 *.pyc
 __pycache__
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+.env*
+!.env.example
