@@ -1,8 +1,0 @@
-{
-  "functions": {
-    "api/baidu-token.py": {
-      "runtime": "python@3.9",
-      "maxDuration": 10
-    }
-  }
-}
