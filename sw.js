@@ -1,9 +1,9 @@
-const CACHE_NAME = 'ycyk-v2';
+const CACHE_NAME = 'ycyk-v3';
 const ASSETS = [
     'index.html',
     'css/app.css',
-    'js/db.js',
     'js/config.js',
+    'js/db.js',
     'js/ocr.js',
     'js/app.js',
     'manifest.json'
@@ -27,10 +27,26 @@ self.addEventListener('activate', (e) => {
 
 self.addEventListener('fetch', (e) => {
     var url = new URL(e.request.url);
+
+    // Never cache API calls
     if (url.pathname.startsWith('/api/')) return;
-    if (url.origin === self.location.origin && e.request.method === 'GET') {
+
+    // Never cache POST requests
+    if (e.request.method !== 'GET') return;
+
+    // For same-origin GET requests: network first, fallback to cache
+    if (url.origin === self.location.origin) {
         e.respondWith(
-            caches.match(e.request).then(function(res) { return res || fetch(e.request); })
+            fetch(e.request).then(function(res) {
+                // Update cache with fresh response
+                var clone = res.clone();
+                caches.open(CACHE_NAME).then(function(cache) {
+                    cache.put(e.request, clone);
+                });
+                return res;
+            }).catch(function() {
+                return caches.match(e.request);
+            })
         );
     }
 });
