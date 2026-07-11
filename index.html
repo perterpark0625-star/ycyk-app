@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#1a73e8">
+<title>汽运 - 仓库装货管理</title>
+<link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="css/app.css">
+<script>document.addEventListener('DOMContentLoaded',function(){setTimeout(function(){var s=document.getElementById('splash-screen');if(s&&!s.classList.contains('hidden')){s.classList.add('hidden')}},10000)});</script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js" async></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js" async></script>
+<script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js" async></script>
+</head>
+<body>
+<div id="app">
+<div id="splash-screen"><div class="splash-icon">🚛</div><h1 class="splash-title">汽运管理</h1><div class="splash-loader"></div></div>
+<div id="page-home" class="page active">
+<header class="app-header"><div class="header-left"><h1 class="header-title">汽运</h1><span class="header-date" id="today-date"></span></div><button class="header-btn header-btn-danger" id="btn-clear-all"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button><button class="header-btn" id="btn-export"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>导出</span></button></header>
+<main class="main-content" id="folder-list"><div class="empty-state" id="empty-state"><div class="empty-icon">📷</div><h2 class="empty-title">还没有装车记录</h2><p class="empty-desc">点击下方按钮开始新建</p></div></main>
+<div class="fab-container"><button class="fab fab-main" id="btn-new-folder"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg><span>新建</span></button></div>
+</div>
+<div id="page-new" class="page">
+<header class="app-header header-transparent"><button class="header-btn header-back" id="btn-new-back"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button><h1 class="header-title">识别车牌</h1><div style="width:44px"></div></header>
+<div id="camera-container"><video id="camera-preview" autoplay playsinline muted></video><div class="camera-guide"><div class="guide-frame"><div class="guide-corner tl"></div><div class="guide-corner tr"></div><div class="guide-corner bl"></div><div class="guide-corner br"></div></div><p class="guide-text">将车牌对准框内</p></div></div>
+<div class="camera-actions"><button class="btn btn-capture" id="btn-capture"><svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/></svg></button><button class="btn btn-text" id="btn-manual-input"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="6" width="20" height="12" rx="2"/><line x1="6" y1="10" x2="6" y2="14"/><line x1="18" y1="10" x2="18" y2="14"/><line x1="10" y1="10" x2="10" y2="14"/><line x1="14" y1="10" x2="14" y2="14"/></svg><span>手动输入</span></button><button class="btn btn-text" id="btn-upload-plate"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span>上传照片</span></button></div>
+<input type="file" id="plate-upload-input" accept="image/*" style="display:none">
+</div>
+<div id="page-confirm" class="page">
+<header class="app-header"><button class="header-btn header-back" id="btn-confirm-back"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button><h1 class="header-title">确认车牌</h1><div style="width:44px"></div></header>
+<main class="main-content"><div class="confirm-card"><div id="confirm-image-container"><img id="confirm-image" alt="拍摄的照片"></div><div class="confirm-form"><label class="form-label" for="input-plate">车牌号码</label><div class="input-group"><input type="text" id="input-plate" class="form-input" placeholder="例如：鲁Q297JE" maxlength="10" autocomplete="off"><button class="btn btn-icon" id="btn-retake"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg><span>重拍</span></button></div><p class="form-hint" id="confirm-hint">正在识别车牌号码...</p></div><button class="btn btn-primary btn-full" id="btn-confirm-save"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>创建文件夹</button></div></main>
+</div>
+<div id="page-manual" class="page">
+<header class="app-header"><button class="header-btn header-back" id="btn-manual-back"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button><h1 class="header-title">手动输入车牌</h1><div style="width:44px"></div></header>
+<main class="main-content"><div class="confirm-card"><div class="manual-icon">🚛</div><div class="confirm-form"><label class="form-label" for="input-plate-manual">车牌号码</label><input type="text" id="input-plate-manual" class="form-input input-plate-large" placeholder="例如：鲁Q297JE" maxlength="10" autocomplete="off" autofocus><p class="form-hint">请输入完整的车牌号码</p></div><button class="btn btn-primary btn-full" id="btn-manual-save"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>创建文件夹</button></div></main>
+</div>
+<div id="page-camera" class="page">
+<header class="app-header header-transparent"><button class="header-btn header-back" id="btn-folder-camera-back"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button><h1 class="header-title">拍照</h1><div style="width:44px"></div></header>
+<div id="folder-camera-container"><video id="folder-camera-preview" autoplay playsinline muted></video></div>
+<div class="camera-actions"><button class="btn btn-capture" id="btn-folder-capture"><svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/></svg></button></div>
+</div>
+<div id="page-folder" class="page">
+<header class="app-header"><button class="header-btn header-back" id="btn-folder-back"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button><h1 class="header-title" id="folder-title">文件夹</h1><div style="width:44px"></div></header>
+<main class="main-content" id="folder-photos"></main>
+<div class="folder-actions"><button class="btn btn-action btn-action-photo" id="btn-take-photo"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg><span>拍照</span></button><button class="btn btn-action btn-action-upload" id="btn-upload-photo"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span>上传</span></button></div>
+</div>
+<input type="file" id="file-input" accept="image/*" multiple style="display:none">
+</div>
+<div id="dialog-overlay" class="dialog-overlay hidden"><div class="dialog"><div class="dialog-body" id="dialog-body"></div></div></div>
+<script src="js/db.js"></script>
+<script src="js/config.js"></script>
+<script src="js/ocr.js"></script>
+<script src="js/app.js"></script>
+<script>if("serviceWorker" in navigator){navigator.serviceWorker.register("sw.js").catch(function(){})}</script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+server.py
+baidu_config.json
+test_ocr.html
+fix.py
+fix2.py
+make_test.py
+fix_html.py
+create_test.py
+*.pyc
+__pycache__
