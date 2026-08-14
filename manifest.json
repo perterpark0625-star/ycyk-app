@@ -1,6 +1,6 @@
 {
-  "name": "汽运管理 - 仓库装货拍照",
-  "short_name": "汽运管理",
+  "name": "一车一卡 - 仓库装货拍照",
+  "short_name": "一车一卡",
   "description": "仓库装货拍照管理工具，自动识别车牌，归类整理照片",
   "start_url": "index.html",
   "display": "standalone",
