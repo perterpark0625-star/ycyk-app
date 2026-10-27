@@ -426,28 +426,53 @@ async function recognizePlate(imageBlob, onProgress) {
     }
 }
 
-/* ==================== 图片压缩（原逻辑保留） ==================== */
+/* ==================== 画布转 Blob ==================== */
+/* 注意：这里故意不用 canvas.toBlob()。
+ * 实测（Android 15 WebView）toBlob 的回调只在页面"持续出帧"时才及时派发，
+ * 静态页面上要等约 4 秒——100x100 画布也要 4005ms，跟图片大小完全无关；
+ * 而同步的 toDataURL 只要几十到两百多毫秒。相册上传慢就是这个原因。
+ * 所以统一走 toDataURL + 手工转 Blob。 */
+function canvasToBlob(canvas, quality) {
+    var dataUrl = canvas.toDataURL("image/jpeg", quality);
+    var comma = dataUrl.indexOf(",");
+    var b64 = comma >= 0 ? dataUrl.substring(comma + 1) : dataUrl;
+    var bin = atob(b64);
+    var len = bin.length;
+    var arr = new Uint8Array(len);
+    for (var i = 0; i < len; i++) arr[i] = bin.charCodeAt(i);
+    return new Blob([arr], { type: "image/jpeg" });
+}
+
+/* ==================== 图片压缩 ==================== */
 function compressImage(blob, maxSize, quality) {
     return new Promise(function (resolve) {
         var img = new Image();
         var url = URL.createObjectURL(blob);
         var resolved = false;
         var done = function (r) {
-            if (!resolved) { resolved = true; URL.revokeObjectURL(url); resolve(r); }
+            if (!resolved) {
+                resolved = true;
+                URL.revokeObjectURL(url);
+                resolve(r && r.size > 0 ? r : blob);
+            }
         };
         img.onload = function () {
-            var w = img.width, h = img.height;
-            if (w > maxSize || h > maxSize) {
-                var ratio = maxSize / Math.max(w, h);
-                w = Math.round(w * ratio); h = Math.round(h * ratio);
+            try {
+                var w = img.width, h = img.height;
+                if (w > maxSize || h > maxSize) {
+                    var ratio = maxSize / Math.max(w, h);
+                    w = Math.round(w * ratio); h = Math.round(h * ratio);
+                }
+                var c = document.createElement("canvas");
+                c.width = w; c.height = h;
+                c.getContext("2d").drawImage(img, 0, 0, w, h);
+                done(canvasToBlob(c, quality));
+            } catch (e) {
+                done(blob);
             }
-            var c = document.createElement("canvas");
-            c.width = w; c.height = h;
-            c.getContext("2d").drawImage(img, 0, 0, w, h);
-            c.toBlob(function (r) { done(r && r.size > 0 ? r : blob); }, "image/jpeg", quality);
         };
         img.onerror = function () { done(blob); };
-        setTimeout(function () { done(blob); }, 10000);
+        setTimeout(function () { done(blob); }, 15000);
         img.src = url;
     });
 }
