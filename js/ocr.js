@@ -288,13 +288,24 @@ async function baiduPost(url, token, b64, extra) {
     }
 }
 
+/* 图片超过这个大小才压缩。
+ * App 内拍照出来就是 1600px、300~400KB，再走一遍 canvas 压缩毫无收益，
+ * 而 WebView 里 canvas 解码+编码要 4 秒左右（是识别耗时的大头），所以直接跳过。
+ * 相册里的大图（几 MB）仍然压缩到 1200px / 0.85。 */
+var OCR_SKIP_COMPRESS_BYTES = 1500 * 1024;
+
 /* 把图片压成 1200px / 0.85 的 JPEG，再转 base64 */
 async function prepareImage(imageBlob, onProgress) {
     if (onProgress) onProgress(0.05);
-    var compressed = await compressImage(imageBlob, 1200, 0.85);
-    if (!compressed || compressed.size < 100) throw new Error("图片处理失败");
+
+    var prepared = imageBlob;
+    if (!imageBlob || imageBlob.size > OCR_SKIP_COMPRESS_BYTES) {
+        prepared = await compressImage(imageBlob, 1200, 0.85);
+    }
+    if (!prepared || prepared.size < 100) throw new Error("图片处理失败");
     if (onProgress) onProgress(0.15);
-    var dataUrl = await toBase64(compressed);
+
+    var dataUrl = await toBase64(prepared);
     var parts = dataUrl.split(",");
     var b64 = parts.length > 1 ? parts[1] : parts[0];
     if (!b64 || b64.length < 10) throw new Error("图片处理失败");
