@@ -1,7 +1,8 @@
-const CACHE_NAME = 'ycyk-v3';
+const CACHE_NAME = 'ycyk-v4';
 const ASSETS = [
     'index.html',
     'css/app.css',
+    'js/zip-lite.js',
     'js/config.js',
     'js/db.js',
     'js/ocr.js',

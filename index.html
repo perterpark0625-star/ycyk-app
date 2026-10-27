@@ -10,9 +10,6 @@
 <link rel="manifest" href="manifest.json">
 <link rel="stylesheet" href="css/app.css">
 <script>document.addEventListener('DOMContentLoaded',function(){setTimeout(function(){var s=document.getElementById('splash-screen');if(s&&!s.classList.contains('hidden')){s.classList.add('hidden')}},10000)});</script>
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js" async></script>
-<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js" async></script>
-<script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js" async></script>
 </head>
 <body>
 <div id="app">
@@ -49,6 +46,7 @@
 <input type="file" id="file-input" accept="image/*" multiple style="display:none">
 </div>
 <div id="dialog-overlay" class="dialog-overlay hidden"><div class="dialog"><div class="dialog-body" id="dialog-body"></div></div></div>
+<script src="js/zip-lite.js"></script>
 <script src="js/db.js"></script>
 <script src="js/config.js"></script>
 <script src="js/ocr.js"></script>
